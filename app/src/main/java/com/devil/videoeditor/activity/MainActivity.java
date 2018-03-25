@@ -10,7 +10,8 @@ import com.devil.videoeditor.R;
 
 
 public class MainActivity extends AppCompatActivity {
-    ImageView iv1,iv2;
+    ImageView iv1, iv2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,12 +31,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-    private void launchActivity1(){
-        Intent click1 = new Intent(this, AudioVideoMerge.class);
+
+    private void launchActivity1() {
+        Intent click1 = new Intent(this, CutVideoActivity.class);
         startActivity(click1);
     }
-    private void launchActivity2(){
-        Intent click2 = new Intent(this, ReverseVideoActivity.class);
-        startActivity(click2);
+
+    private void launchActivity2() {
+        Intent click1 = new Intent(this, ExtractAudioActivity.class);
+        startActivity(click1);
     }
 }
