@@ -23,10 +23,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.MediaController;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.VideoView;
 
 import com.devil.videoeditor.R;
 import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
