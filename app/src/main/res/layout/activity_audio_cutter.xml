@@ -50,23 +50,12 @@
             android:textColor="#000000" />
 
         <TextView
-            android:id="@+id/tvInstructions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/tvRight"
-            android:layout_centerHorizontal="true"
-            android:layout_margin="@dimen/dp5"
-            android:gravity="center"
-            android:text="@string/rangeSeekBarText"
-            android:textColor="#000000" />
-
-        <TextView
             android:id="@+id/uploadAudio"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/tvInstructions"
+            android:layout_below="@+id/rangeSeekBar"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="@dimen/dp5"
+            android:layout_marginTop="@dimen/dp45"
             android:background="@drawable/upload_video_selector"
             android:gravity="center"
             android:padding="@dimen/dp5"

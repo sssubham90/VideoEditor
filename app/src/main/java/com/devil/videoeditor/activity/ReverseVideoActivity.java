@@ -71,7 +71,7 @@ public class ReverseVideoActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_reverse_video);
         mContext = this;
         TextView uploadVideo = findViewById(R.id.uploadVideo);
         TextView reverseVideo = findViewById(R.id.reverseVideo);
@@ -394,132 +394,7 @@ public class ReverseVideoActivity extends AppCompatActivity {
         String[] complexCommand = {"-y", "-i", yourRealPath, "-s", "160x120", "-r", "25", "-vcodec", "mpeg4", "-b:v", "150k", "-b:a", "48000", "-ac", "2", "-ar", "22050", filePath};
         execFFmpegBinary(complexCommand);
 
-    }
-
-    /**
-     * Command for extracting images from video
-     */
-    private void extractImagesVideo(int startMs, int endMs) {
-        File moviesDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES
-        );
-
-        String filePrefix = "extract_picture";
-        String fileExtn = ".jpg";
-        String yourRealPath = getPath(ReverseVideoActivity.this, selectedVideoUri);
-
-        File dir = new File(moviesDir, "VideoEditor");
-        int fileNo = 0;
-        while (dir.exists()) {
-            fileNo++;
-            dir = new File(moviesDir, "VideoEditor" + fileNo);
-
-        }
-        dir.mkdir();
-        filePath = dir.getAbsolutePath();
-        File dest = new File(dir, filePrefix + "%03d" + fileExtn);
-
-
-        Log.d(TAG, "startTrim: src: " + yourRealPath);
-        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
-
-        String[] complexCommand = {"-y", "-i", yourRealPath, "-an", "-r", "1", "-ss", "" + startMs / 1000, "-t", "" + (endMs - startMs) / 1000, dest.getAbsolutePath()};
-  /*   Remove -r 1 if you want to extract all video frames as images from the specified time duration.*/
-        execFFmpegBinary(complexCommand);
-
-    }
-
-    /**
-     * Command for adding fade in fade out effect at start and end of video
-     */
-    private void executeFadeInFadeOutCommand() {
-        File moviesDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_MOVIES
-        );
-
-        String filePrefix = "fade_video";
-        String fileExtn = ".mp4";
-        String yourRealPath = getPath(ReverseVideoActivity.this, selectedVideoUri);
-
-
-        File dest = new File(moviesDir, filePrefix + fileExtn);
-        int fileNo = 0;
-        while (dest.exists()) {
-            fileNo++;
-            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
-        }
-
-
-        Log.d(TAG, "startTrim: src: " + yourRealPath);
-        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
-        filePath = dest.getAbsolutePath();
-        String[] complexCommand = {"-y", "-i", yourRealPath, "-acodec", "copy", "-vf", "fade=t=in:st=0:d=5,fade=t=out:st=" + String.valueOf(duration - 5) + ":d=5", filePath};
-        execFFmpegBinary(complexCommand);
-
-    }
-
-    /**
-     * Command for creating fast motion video
-     */
-    private void executeFastMotionVideoCommand() {
-        File moviesDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_MOVIES
-        );
-
-        String filePrefix = "speed_video";
-        String fileExtn = ".mp4";
-        String yourRealPath = getPath(ReverseVideoActivity.this, selectedVideoUri);
-
-
-        File dest = new File(moviesDir, filePrefix + fileExtn);
-        int fileNo = 0;
-        while (dest.exists()) {
-            fileNo++;
-            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
-        }
-
-
-        Log.d(TAG, "startTrim: src: " + yourRealPath);
-        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
-        filePath = dest.getAbsolutePath();
-        String[] complexCommand = {"-y", "-i", yourRealPath, "-filter_complex", "[0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a]", "-map", "[v]", "-map", "[a]", "-b:v", "2097k", "-r", "60", "-vcodec", "mpeg4", filePath};
-        execFFmpegBinary(complexCommand);
-
-    }
-
-    /**
-     * Command for creating slow motion video
-     */
-    private void executeSlowMotionVideoCommand() {
-        File moviesDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_MOVIES
-        );
-
-        String filePrefix = "slowmotion_video";
-        String fileExtn = ".mp4";
-        String yourRealPath = getPath(ReverseVideoActivity.this, selectedVideoUri);
-
-
-        File dest = new File(moviesDir, filePrefix + fileExtn);
-        int fileNo = 0;
-        while (dest.exists()) {
-            fileNo++;
-            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
-        }
-
-
-        Log.d(TAG, "startTrim: src: " + yourRealPath);
-        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
-        filePath = dest.getAbsolutePath();
-        String[] complexCommand = {"-y", "-i", yourRealPath, "-filter_complex", "[0:v]setpts=2.0*PTS[v];[0:a]atempo=0.5[a]", "-map", "[v]", "-map", "[a]", "-b:v", "2097k", "-r", "60", "-vcodec", "mpeg4", filePath};
-        execFFmpegBinary(complexCommand);
-
-    }
-
-    /**
-     * Command for extracting audio from video
-     */
-    private void extractAudioVideo() {
+    }private void extractAudioVideo() {
         File moviesDir = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_MUSIC
         );
@@ -655,12 +530,10 @@ public class ReverseVideoActivity extends AppCompatActivity {
                     if (choice == 8) {
                         choice = 9;
                         reverseVideoCommand();
-                    }
-                    else if (Arrays.equals(command, lastReverseCommand)) {
+                    } else if (Arrays.equals(command, lastReverseCommand)) {
                         choice = 10;
                         concatVideoCommand();
-                    }
-                    else if (choice == 10) {
+                    } else if (choice == 10) {
                         File moviesDir = Environment.getExternalStoragePublicDirectory(
                                 Environment.DIRECTORY_MOVIES
                         );

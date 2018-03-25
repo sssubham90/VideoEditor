@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -280,14 +281,50 @@ public class AudioVideoMerge extends AppCompatActivity {
         Log.d(TAG, "src: audio:" + audioRealPath + "& video:" + videoRealPath);
         Log.d(TAG, "dest: " + dest.getAbsolutePath());
         filePath = dest.getAbsolutePath();
-        String[] complexCommand1 = {"-y", "-i", videoRealPath, "-i", audioRealPath, "-c:v", "copy", "-c:a", "aac", "-strict", "experimental",
+        final String[] complexCommand1 = {"-y", "-i", videoRealPath, "-i", audioRealPath, "-c:v", "copy", "-c:a", "aac", "-strict", "experimental",
         "-map", "0:v:0", "-map", "1:a:0", "-shortest", filePath};
-        String[] complexCommand2 = {"-y", "-i", videoRealPath, "-i", audioRealPath, "-c:v", "copy", "-c:a", "aac", "-strict", "experimental", "[0:a][1:a]amerge=inputs=2[a]",
+        final String[] complexCommand2 = {"-y", "-i", videoRealPath, "-i", audioRealPath, "-c:v", "copy", "-c:a", "aac","-filter_complex", "[0:a][1:a]amerge=inputs=2[a]",
         "-map", "0:v:0", "-map", "[a]", "-shortest", filePath};
-        if(choice.isChecked())
-            execFFmpegBinary(complexCommand2);
-        else
-            execFFmpegBinary(complexCommand1);
+
+        final String[] complexCommand3 = {"-y", "-i", videoRealPath, "-i", audioRealPath, "-c:v", "copy", "-c:a", "aac", "-strict", "experimental",
+                "-map", "0:v:0", "-map", "1:a:0", filePath};
+        final String[] complexCommand4 = {"-y", "-i", videoRealPath, "-i", audioRealPath, "-c:v", "copy", "-c:a", "aac","-filter_complex", "[0:a][1:a]amerge=inputs=2[a]",
+                "-map", "0:v:0", "-map", "[a]", filePath};
+        MediaPlayer mp;
+        mp = MediaPlayer.create(this, Uri.parse(audioRealPath));
+        int audioDuration = mp.getDuration();
+        mp.reset();
+        mp = MediaPlayer.create(this, Uri.parse(videoRealPath));
+        int videoDuration = mp.getDuration();
+        mp.reset();
+        mp.release();
+        if(audioDuration<videoDuration){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Audio Is Short")
+                    .setPositiveButton("Trim Video To Audio Length", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            if(choice.isChecked())
+                                execFFmpegBinary(complexCommand2);
+                            else
+                                execFFmpegBinary(complexCommand1);
+                        }
+                    })
+                    .setNegativeButton("Mute Remaining Video", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            if(choice.isChecked())
+                                execFFmpegBinary(complexCommand4);
+                            else
+                                execFFmpegBinary(complexCommand3);
+                        }
+                    });
+            builder.create();
+        }
+        else{
+            if(choice.isChecked())
+                execFFmpegBinary(complexCommand2);
+            else
+                execFFmpegBinary(complexCommand1);
+        }
     }
 
     /**

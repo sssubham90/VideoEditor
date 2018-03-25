@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         startActivity(click1);
     }
     private void launchActivity2(){
-        Intent click2 = new Intent(this, ExtractAudioActivity.class);
+        Intent click2 = new Intent(this, ReverseVideoActivity.class);
         startActivity(click2);
     }
 }

@@ -60,10 +60,10 @@ public class AudioCutterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_cut_video);
-        TextView uploadVideo = findViewById(R.id.uploadVideo);
-        TextView cutVideo = findViewById(R.id.cropVideo);
-
+        setContentView(R.layout.activity_audio_cutter);
+        TextView uploadAudio = findViewById(R.id.uploadAudio);
+        TextView cutAudio = findViewById(R.id.extractAudio);
+        mediaPlayer = new MediaPlayer();
         tvLeft = findViewById(R.id.tvLeft);
         tvRight = findViewById(R.id.tvRight);
         rangeSeekBar = findViewById(R.id.rangeSeekBar);
@@ -74,7 +74,7 @@ public class AudioCutterActivity extends AppCompatActivity {
         rangeSeekBar.setEnabled(true);
         loadFFMpegBinary();
 
-        uploadVideo.setOnClickListener(new View.OnClickListener() {
+        uploadAudio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (Build.VERSION.SDK_INT >= 23)
@@ -86,13 +86,13 @@ public class AudioCutterActivity extends AppCompatActivity {
         });
 
 
-        cutVideo.setOnClickListener(new View.OnClickListener() {
+        cutAudio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (selectedAudioUri != null)
                     executeCutAudioCommand(rangeSeekBar.getSelectedMinValue() * 1000, rangeSeekBar.getSelectedMaxValue() * 1000);
                 else
-                    Snackbar.make(mainlayout, "Please upload a video", 4000).show();
+                    Snackbar.make(mainlayout, "Please upload a Audio", 4000).show();
             }
         });
     }
@@ -134,7 +134,7 @@ public class AudioCutterActivity extends AppCompatActivity {
     }
 
     /**
-     * Opening gallery for uploading video
+     * Opening gallery for uploading Audio
      */
     private void uploadAudio() {
         try {
@@ -263,11 +263,11 @@ public class AudioCutterActivity extends AppCompatActivity {
     }
 
     /**
-     * Command for cutting video
+     * Command for cutting Audio
      */
     private void executeCutAudioCommand(int startMs, int endMs) {
         File moviesDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_MOVIES
+                Environment.DIRECTORY_MUSIC
         );
 
         String filePrefix = "cut_audio";
@@ -285,7 +285,7 @@ public class AudioCutterActivity extends AppCompatActivity {
         Log.d(TAG, "startTrim: startMs: " + startMs);
         Log.d(TAG, "startTrim: endMs: " + endMs);
         filePath = dest.getAbsolutePath();
-        String[] complexCommand = {"-ss", "" + startMs / 1000, "-y", "-i", yourRealPath, "-t", "" + (endMs - startMs) / 1000, "-ac", "mp3", "-b:v", "2097152", "-b:a", "48000", "-ac", "2", "-ar", "22050", filePath};
+        String[] complexCommand = {"-ss", "" + startMs / 1000, "-y", "-i", yourRealPath, "-t", "" + (endMs - startMs) / 1000, filePath};
 
         execFFmpegBinary(complexCommand);
 
@@ -305,7 +305,7 @@ public class AudioCutterActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String s) {
                     Log.d(TAG, "SUCCESS with output : " + s);
-                    Intent intent = new Intent(AudioCutterActivity.this, PreviewActivity.class);
+                    Intent intent = new Intent(AudioCutterActivity.this, AudioPreviewActivity.class);
                     intent.putExtra(FILEPATH, filePath);
                     startActivity(intent);
                 }
@@ -369,8 +369,8 @@ public class AudioCutterActivity extends AppCompatActivity {
                     Uri contentUri = null;
                     if ("image".equals(type)) {
                         contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                    } else if ("video".equals(type)) {
-                        contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                    } else if ("Audio".equals(type)) {
+                        contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
                     } else if ("audio".equals(type)) {
                         contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
                     }
