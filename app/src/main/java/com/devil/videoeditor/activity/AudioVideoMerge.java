@@ -318,6 +318,7 @@ public class AudioVideoMerge extends AppCompatActivity {
                         }
                     });
             builder.create();
+            builder.show();
         }
         else{
             if(choice.isChecked())
