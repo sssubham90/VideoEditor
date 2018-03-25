@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.devil.videoeditor.activity.AudioVideoMerge">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_centerVertical="true"
+        android:gravity="center"
+        android:id="@+id/linearLayout">
+
+        <TextView
+            android:id="@+id/uploadVideo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/dp5"
+            android:background="@drawable/upload_video_selector"
+            android:gravity="center"
+            android:padding="@dimen/dp5"
+            android:singleLine="true"
+            android:text="@string/uploadVideo"
+            android:textColor="#FFFFFF"
+            android:textSize="@dimen/sp16" />
+
+        <TextView
+            android:id="@+id/uploadAudio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:layout_margin="@dimen/dp5"
+            android:background="@drawable/upload_video_selector"
+            android:gravity="center"
+            android:padding="@dimen/dp5"
+            android:text="@string/uploadAudio"
+            android:textColor="#FFFFFF"
+            android:textSize="@dimen/sp16" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/merge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/linearLayout"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="36dp"
+        android:background="@drawable/upload_video_selector"
+        android:gravity="center"
+        android:padding="@dimen/dp5"
+        android:singleLine="true"
+        android:text="@string/merge"
+        android:textColor="#FFFFFF"
+        android:textSize="@dimen/sp16" />
+
+    <CheckBox
+        android:id="@+id/choice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/merge"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:text="Keep original audio source." />
+
+</RelativeLayout>
