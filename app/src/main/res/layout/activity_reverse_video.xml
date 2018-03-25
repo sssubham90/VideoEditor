@@ -85,7 +85,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/uploadVideo"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="30dp"
             android:background="@drawable/reverse_video_selector"
             android:gravity="center"
             android:padding="@dimen/dp2"
