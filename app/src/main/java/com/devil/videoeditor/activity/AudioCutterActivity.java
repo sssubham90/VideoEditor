@@ -48,7 +48,6 @@ public class AudioCutterActivity extends AppCompatActivity {
     private FFmpeg ffmpeg;
     private ProgressDialog progressDialog;
     private static final String TAG = "DEVIL";
-    private static final String POSITION = "position";
     private static final String FILEPATH = "filepath";
     private int stopPosition;
     private ScrollView mainlayout;

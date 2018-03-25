@@ -57,7 +57,6 @@ public class ReverseVideoActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     private Uri selectedVideoUri;
     private static final String TAG = "DEVIL";
-    private static final String POSITION = "position";
     private static final String FILEPATH = "filepath";
     private int choice = 0;
     private int stopPosition;
@@ -72,14 +71,15 @@ public class ReverseVideoActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_reverse_video);
+        setContentView(R.layout.activity_main);
         mContext = this;
         TextView uploadVideo = findViewById(R.id.uploadVideo);
         TextView reverseVideo = findViewById(R.id.reverseVideo);
-
         tvLeft = findViewById(R.id.tvLeft);
         tvRight = findViewById(R.id.tvRight);
+
         videoView = findViewById(R.id.videoView);
+
         rangeSeekBar = findViewById(R.id.rangeSeekBar);
         mainlayout = findViewById(R.id.mainlayout);
         progressDialog = new ProgressDialog(this);
@@ -98,10 +98,12 @@ public class ReverseVideoActivity extends AppCompatActivity {
 
             }
         });
+
         reverseVideo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (selectedVideoUri != null) {
+                    choice = 8;
                     final Dialog dialog = showSingleOptionTextDialog(mContext);
                     TextView tvDialogHeading = dialog.findViewById(R.id.tvDialogHeading);
                     TextView tvDialogText = dialog.findViewById(R.id.tvDialogText);
@@ -151,15 +153,55 @@ public class ReverseVideoActivity extends AppCompatActivity {
             uploadVideo();
     }
 
+    private void getAudioPermission() {
+        String[] params = null;
+        String recordAudio = Manifest.permission.RECORD_AUDIO;
+        String modifyAudio = Manifest.permission.MODIFY_AUDIO_SETTINGS;
+
+        int hasRecordAudioPermission = ActivityCompat.checkSelfPermission(this, recordAudio);
+        int hasModifyAudioPermission = ActivityCompat.checkSelfPermission(this, modifyAudio);
+        List<String> permissions = new ArrayList<>();
+
+        if (hasRecordAudioPermission != PackageManager.PERMISSION_GRANTED)
+            permissions.add(recordAudio);
+        if (hasModifyAudioPermission != PackageManager.PERMISSION_GRANTED)
+            permissions.add(modifyAudio);
+
+        if (!permissions.isEmpty()) {
+            params = permissions.toArray(new String[permissions.size()]);
+        }
+        if (params != null && params.length > 0) {
+            ActivityCompat.requestPermissions(ReverseVideoActivity.this,
+                    params,
+                    200);
+        } else
+            extractAudioVideo();
+    }
+
     /**
      * Handling response for permission request
      */
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String permissions[], @NonNull int[] grantResults) {
-        if (requestCode == 100 && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            uploadVideo();
+        switch (requestCode) {
+            case 100: {
+
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    uploadVideo();
+                }
+            }
+            break;
+            case 200: {
+
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    extractAudioVideo();
+                }
+            }
+
+
         }
     }
 
@@ -297,6 +339,212 @@ public class ReverseVideoActivity extends AppCompatActivity {
     }
 
     /**
+     * Command for cutting video
+     */
+    private void executeCutVideoCommand(int startMs, int endMs) {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MOVIES
+        );
+
+        String filePrefix = "cut_video";
+        String fileExtn = ".mp4";
+        String yourRealPath = getPath(ReverseVideoActivity.this, selectedVideoUri);
+        File dest = new File(moviesDir, filePrefix + fileExtn);
+        int fileNo = 0;
+        while (dest.exists()) {
+            fileNo++;
+            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
+        }
+
+        Log.d(TAG, "startTrim: src: " + yourRealPath);
+        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
+        Log.d(TAG, "startTrim: startMs: " + startMs);
+        Log.d(TAG, "startTrim: endMs: " + endMs);
+        filePath = dest.getAbsolutePath();
+        //String[] complexCommand = {"-i", yourRealPath, "-ss", "" + startMs / 1000, "-t", "" + endMs / 1000, dest.getAbsolutePath()};
+        String[] complexCommand = {"-ss", "" + startMs / 1000, "-y", "-i", yourRealPath, "-t", "" + (endMs - startMs) / 1000,"-vcodec", "mpeg4", "-b:v", "2097152", "-b:a", "48000", "-ac", "2", "-ar", "22050", filePath};
+
+        execFFmpegBinary(complexCommand);
+
+    }
+
+    /**
+     * Command for compressing video
+     */
+    private void executeCompressCommand() {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MOVIES
+        );
+
+        String filePrefix = "compress_video";
+        String fileExtn = ".mp4";
+        String yourRealPath = getPath(ReverseVideoActivity.this, selectedVideoUri);
+
+
+        File dest = new File(moviesDir, filePrefix + fileExtn);
+        int fileNo = 0;
+        while (dest.exists()) {
+            fileNo++;
+            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
+        }
+
+        Log.d(TAG, "startTrim: src: " + yourRealPath);
+        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
+        filePath = dest.getAbsolutePath();
+        String[] complexCommand = {"-y", "-i", yourRealPath, "-s", "160x120", "-r", "25", "-vcodec", "mpeg4", "-b:v", "150k", "-b:a", "48000", "-ac", "2", "-ar", "22050", filePath};
+        execFFmpegBinary(complexCommand);
+
+    }
+
+    /**
+     * Command for extracting images from video
+     */
+    private void extractImagesVideo(int startMs, int endMs) {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES
+        );
+
+        String filePrefix = "extract_picture";
+        String fileExtn = ".jpg";
+        String yourRealPath = getPath(ReverseVideoActivity.this, selectedVideoUri);
+
+        File dir = new File(moviesDir, "VideoEditor");
+        int fileNo = 0;
+        while (dir.exists()) {
+            fileNo++;
+            dir = new File(moviesDir, "VideoEditor" + fileNo);
+
+        }
+        dir.mkdir();
+        filePath = dir.getAbsolutePath();
+        File dest = new File(dir, filePrefix + "%03d" + fileExtn);
+
+
+        Log.d(TAG, "startTrim: src: " + yourRealPath);
+        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
+
+        String[] complexCommand = {"-y", "-i", yourRealPath, "-an", "-r", "1", "-ss", "" + startMs / 1000, "-t", "" + (endMs - startMs) / 1000, dest.getAbsolutePath()};
+  /*   Remove -r 1 if you want to extract all video frames as images from the specified time duration.*/
+        execFFmpegBinary(complexCommand);
+
+    }
+
+    /**
+     * Command for adding fade in fade out effect at start and end of video
+     */
+    private void executeFadeInFadeOutCommand() {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MOVIES
+        );
+
+        String filePrefix = "fade_video";
+        String fileExtn = ".mp4";
+        String yourRealPath = getPath(ReverseVideoActivity.this, selectedVideoUri);
+
+
+        File dest = new File(moviesDir, filePrefix + fileExtn);
+        int fileNo = 0;
+        while (dest.exists()) {
+            fileNo++;
+            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
+        }
+
+
+        Log.d(TAG, "startTrim: src: " + yourRealPath);
+        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
+        filePath = dest.getAbsolutePath();
+        String[] complexCommand = {"-y", "-i", yourRealPath, "-acodec", "copy", "-vf", "fade=t=in:st=0:d=5,fade=t=out:st=" + String.valueOf(duration - 5) + ":d=5", filePath};
+        execFFmpegBinary(complexCommand);
+
+    }
+
+    /**
+     * Command for creating fast motion video
+     */
+    private void executeFastMotionVideoCommand() {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MOVIES
+        );
+
+        String filePrefix = "speed_video";
+        String fileExtn = ".mp4";
+        String yourRealPath = getPath(ReverseVideoActivity.this, selectedVideoUri);
+
+
+        File dest = new File(moviesDir, filePrefix + fileExtn);
+        int fileNo = 0;
+        while (dest.exists()) {
+            fileNo++;
+            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
+        }
+
+
+        Log.d(TAG, "startTrim: src: " + yourRealPath);
+        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
+        filePath = dest.getAbsolutePath();
+        String[] complexCommand = {"-y", "-i", yourRealPath, "-filter_complex", "[0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a]", "-map", "[v]", "-map", "[a]", "-b:v", "2097k", "-r", "60", "-vcodec", "mpeg4", filePath};
+        execFFmpegBinary(complexCommand);
+
+    }
+
+    /**
+     * Command for creating slow motion video
+     */
+    private void executeSlowMotionVideoCommand() {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MOVIES
+        );
+
+        String filePrefix = "slowmotion_video";
+        String fileExtn = ".mp4";
+        String yourRealPath = getPath(ReverseVideoActivity.this, selectedVideoUri);
+
+
+        File dest = new File(moviesDir, filePrefix + fileExtn);
+        int fileNo = 0;
+        while (dest.exists()) {
+            fileNo++;
+            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
+        }
+
+
+        Log.d(TAG, "startTrim: src: " + yourRealPath);
+        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
+        filePath = dest.getAbsolutePath();
+        String[] complexCommand = {"-y", "-i", yourRealPath, "-filter_complex", "[0:v]setpts=2.0*PTS[v];[0:a]atempo=0.5[a]", "-map", "[v]", "-map", "[a]", "-b:v", "2097k", "-r", "60", "-vcodec", "mpeg4", filePath};
+        execFFmpegBinary(complexCommand);
+
+    }
+
+    /**
+     * Command for extracting audio from video
+     */
+    private void extractAudioVideo() {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MUSIC
+        );
+
+        String filePrefix = "extract_audio";
+        String fileExtn = ".mp3";
+        String yourRealPath = getPath(ReverseVideoActivity.this, selectedVideoUri);
+        File dest = new File(moviesDir, filePrefix + fileExtn);
+
+        int fileNo = 0;
+        while (dest.exists()) {
+            fileNo++;
+            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
+        }
+        Log.d(TAG, "startTrim: src: " + yourRealPath);
+        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
+        filePath = dest.getAbsolutePath();
+
+        String[] complexCommand = {"-y", "-i", yourRealPath, "-vn", "-ar", "44100", "-ac", "2", "-b:a", "256k", "-f", "mp3", filePath};
+
+        execFFmpegBinary(complexCommand);
+
+    }
+
+    /**
      * Command for segmenting video
      */
     private void splitVideoCommand(String path) {
@@ -408,6 +656,25 @@ public class ReverseVideoActivity extends AppCompatActivity {
                         choice = 9;
                         reverseVideoCommand();
                     }
+                    else if (Arrays.equals(command, lastReverseCommand)) {
+                        choice = 10;
+                        concatVideoCommand();
+                    }
+                    else if (choice == 10) {
+                        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                                Environment.DIRECTORY_MOVIES
+                        );
+                        File destDir = new File(moviesDir, ".VideoPartsReverse");
+                        File dir = new File(moviesDir, ".VideoSplit");
+                        if (dir.exists())
+                            deleteDir(dir);
+                        if (destDir.exists())
+                            deleteDir(destDir);
+                        choice = 11;
+                        Intent intent = new Intent(ReverseVideoActivity.this, PreviewActivity.class);
+                        intent.putExtra(FILEPATH, filePath);
+                        startActivity(intent);
+                    }
                 }
 
                 @Override
@@ -417,6 +684,10 @@ public class ReverseVideoActivity extends AppCompatActivity {
                         progressDialog.setMessage("progress : splitting video " + s);
                     else if (choice == 9)
                         progressDialog.setMessage("progress : reversing splitted videos " + s);
+                    else if (choice == 10)
+                        progressDialog.setMessage("progress : concatenating reversed videos " + s);
+                    else
+                        progressDialog.setMessage("progress : " + s);
                     Log.d(TAG, "progress : " + s);
                 }
 

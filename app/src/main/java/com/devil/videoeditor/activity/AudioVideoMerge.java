@@ -15,12 +15,14 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.devil.videoeditor.R;
@@ -47,6 +49,7 @@ public class AudioVideoMerge extends AppCompatActivity {
     private Uri selectedVideoUri;
     private String filePath;
     private CheckBox choice;
+    private ScrollView mainlayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +57,8 @@ public class AudioVideoMerge extends AppCompatActivity {
         setContentView(R.layout.activity_audio_video_merge);
         TextView uploadAudio = findViewById(R.id.uploadAudio);
         TextView uploadVideo = findViewById(R.id.uploadVideo);
-        TextView merge = findViewById(R.id.merge);
+        final TextView merge = findViewById(R.id.merge);
+        mainlayout = findViewById(R.id.mainlayout);
         choice = findViewById(R.id.choice);
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle(null);
@@ -84,7 +88,12 @@ public class AudioVideoMerge extends AppCompatActivity {
         merge.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mergeAudioVideo();
+                if(selectedAudioUri == null )
+                    Snackbar.make(mainlayout, "Please upload a audio", 4000).show();
+                else if(selectedVideoUri == null)
+                    Snackbar.make(mainlayout, "Please upload a video", 4000).show();
+                else
+                    mergeAudioVideo();
             }
         });
     }
