@@ -17,6 +17,7 @@ import android.os.Handler;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -25,6 +26,7 @@ import android.view.View;
 import android.widget.MediaController;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 import com.devil.videoeditor.R;
 import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
@@ -41,6 +43,7 @@ import java.util.List;
 
 public class AudioCutterActivity extends AppCompatActivity {
 
+
     private static final int REQUEST_TAKE_GALLERY_AUDIO = 100;
     private RangeSeekBar<Integer> rangeSeekBar;
     private Runnable r;
@@ -54,15 +57,16 @@ public class AudioCutterActivity extends AppCompatActivity {
     private TextView tvLeft, tvRight;
     private String filePath;
     private int duration;
-    private MediaController controller;
     private MediaPlayer mediaPlayer;
     private Uri selectedAudioUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_audio_cutter);
-        TextView uploadAudio = findViewById(R.id.uploadAudio);
+        setContentView(R.layout.activity_cut_video);
+        TextView uploadVideo = findViewById(R.id.uploadVideo);
+        TextView cutVideo = findViewById(R.id.cropVideo);
+
         tvLeft = findViewById(R.id.tvLeft);
         tvRight = findViewById(R.id.tvRight);
         rangeSeekBar = findViewById(R.id.rangeSeekBar);
@@ -73,7 +77,7 @@ public class AudioCutterActivity extends AppCompatActivity {
         rangeSeekBar.setEnabled(true);
         loadFFMpegBinary();
 
-        uploadAudio.setOnClickListener(new View.OnClickListener() {
+        uploadVideo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (Build.VERSION.SDK_INT >= 23)
@@ -81,6 +85,17 @@ public class AudioCutterActivity extends AppCompatActivity {
                 else
                     uploadAudio();
 
+            }
+        });
+
+
+        cutVideo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (selectedAudioUri != null)
+                    executeCutAudioCommand(rangeSeekBar.getSelectedMinValue() * 1000, rangeSeekBar.getSelectedMaxValue() * 1000);
+                else
+                    Snackbar.make(mainlayout, "Please upload a video", 4000).show();
             }
         });
     }
@@ -109,56 +124,15 @@ public class AudioCutterActivity extends AppCompatActivity {
         } else
             uploadAudio();
     }
-
-    private void getAudioPermission() {
-        String[] params = null;
-        String recordAudio = Manifest.permission.RECORD_AUDIO;
-        String modifyAudio = Manifest.permission.MODIFY_AUDIO_SETTINGS;
-
-        int hasRecordAudioPermission = ActivityCompat.checkSelfPermission(this, recordAudio);
-        int hasModifyAudioPermission = ActivityCompat.checkSelfPermission(this, modifyAudio);
-        List<String> permissions = new ArrayList<>();
-
-        if (hasRecordAudioPermission != PackageManager.PERMISSION_GRANTED)
-            permissions.add(recordAudio);
-        if (hasModifyAudioPermission != PackageManager.PERMISSION_GRANTED)
-            permissions.add(modifyAudio);
-
-        if (!permissions.isEmpty()) {
-            params = permissions.toArray(new String[permissions.size()]);
-        }
-        if (params != null && params.length > 0) {
-            ActivityCompat.requestPermissions(AudioCutterActivity.this,
-                    params,
-                    200);
-        } else
-            extractAudioVideo();
-    }
-
     /**
      * Handling response for permission request
      */
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String permissions[], @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case 100: {
-
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    uploadAudio();
-                }
-            }
-            break;
-            case 200: {
-
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    extractAudioVideo();
-                }
-            }
-
-
+        if (requestCode==100&&grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            uploadAudio();
         }
     }
 
@@ -196,8 +170,9 @@ public class AudioCutterActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK) {
             if (requestCode == REQUEST_TAKE_GALLERY_AUDIO) {
                 selectedAudioUri = data.getData();
-                mediaPlayer = MediaPlayer.create(this, selectedAudioUri);
+                mediaPlayer = MediaPlayer.create(this,selectedAudioUri);
                 mediaPlayer.start();
+
 
                 mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
 
@@ -205,6 +180,7 @@ public class AudioCutterActivity extends AppCompatActivity {
                     public void onPrepared(MediaPlayer mp) {
                         duration = mp.getDuration() / 1000;
                         tvLeft.setText("00:00:00");
+
                         tvRight.setText(getTime(mp.getDuration() / 1000));
                         mp.setLooping(true);
                         rangeSeekBar.setRangeValues(0, duration);
@@ -290,28 +266,29 @@ public class AudioCutterActivity extends AppCompatActivity {
     }
 
     /**
-     * Command for extracting audio from video
+     * Command for cutting video
      */
-    private void extractAudioVideo() {
+    private void executeCutAudioCommand(int startMs, int endMs) {
         File moviesDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_MUSIC
+                Environment.DIRECTORY_MOVIES
         );
 
-        String filePrefix = "extract_audio";
+        String filePrefix = "cut_audio";
         String fileExtn = ".mp3";
         String yourRealPath = getPath(AudioCutterActivity.this, selectedAudioUri);
         File dest = new File(moviesDir, filePrefix + fileExtn);
-
         int fileNo = 0;
         while (dest.exists()) {
             fileNo++;
             dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
         }
+
         Log.d(TAG, "startTrim: src: " + yourRealPath);
         Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
+        Log.d(TAG, "startTrim: startMs: " + startMs);
+        Log.d(TAG, "startTrim: endMs: " + endMs);
         filePath = dest.getAbsolutePath();
-
-        String[] complexCommand = {"-y", "-i", yourRealPath, "-vn", "-ar", "44100", "-ac", "2", "-b:a", "256k", "-f", "mp3", filePath};
+        String[] complexCommand = {"-ss", "" + startMs / 1000, "-y", "-i", yourRealPath, "-t", "" + (endMs - startMs) / 1000, "-ac", "mp3", "-b:v", "2097152", "-b:a", "48000", "-ac", "2", "-ar", "22050", filePath};
 
         execFFmpegBinary(complexCommand);
 
@@ -331,7 +308,7 @@ public class AudioCutterActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String s) {
                     Log.d(TAG, "SUCCESS with output : " + s);
-                    Intent intent = new Intent(AudioCutterActivity.this, AudioPreviewActivity.class);
+                    Intent intent = new Intent(AudioCutterActivity.this, PreviewActivity.class);
                     intent.putExtra(FILEPATH, filePath);
                     startActivity(intent);
                 }
@@ -376,18 +353,14 @@ public class AudioCutterActivity extends AppCompatActivity {
                     final String docId = DocumentsContract.getDocumentId(uri);
                     final String[] split = docId.split(":");
                     final String type = split[0];
-
                     if ("primary".equalsIgnoreCase(type)) {
                         return Environment.getExternalStorageDirectory() + "/" + split[1];
                     }
                 }
                 // DownloadsProvider
                 else if (isDownloadsDocument(uri)) {
-
                     final String id = DocumentsContract.getDocumentId(uri);
-                    final Uri contentUri = ContentUris.withAppendedId(
-                            Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-
+                    final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.parseLong(id));
                     return getDataColumn(context, contentUri, null, null);
                 }
                 // MediaProvider
@@ -476,5 +449,4 @@ public class AudioCutterActivity extends AppCompatActivity {
     private boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
-
 }
