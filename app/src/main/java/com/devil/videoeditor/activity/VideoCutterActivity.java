@@ -315,7 +315,7 @@ public class VideoCutterActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String s) {
                     Log.d(TAG, "SUCCESS with output : " + s);
-                    Intent intent = new Intent(VideoCutterActivity.this, PreviewActivity.class);
+                    Intent intent = new Intent(VideoCutterActivity.this, VideoPreviewActivity.class);
                     intent.putExtra(FILEPATH, filePath);
                     startActivity(intent);
                 }

@@ -25,7 +25,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activity.PreviewActivity"
+            android:name=".activity.VideoPreviewActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".activity.AudioPreviewActivity"
@@ -34,7 +34,7 @@
         <activity android:name=".activity.ExtractAudioActivity" />
         <activity android:name=".activity.VideoReverseActivity" />
         <activity android:name=".activity.AudioCutterActivity" />
-        <activity android:name=".activity.AudioVideoMerge"></activity>
+        <activity android:name=".activity.AudioVideoMergeActivity"></activity>
     </application>
 
 </manifest>

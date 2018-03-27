@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AudioVideoMerge extends AppCompatActivity {
+public class AudioVideoMergeActivity extends AppCompatActivity {
 
     private static final int REQUEST_TAKE_GALLERY_AUDIO = 100;
     private static final int REQUEST_TAKE_GALLERY_VIDEO = 200;
@@ -117,7 +117,7 @@ public class AudioVideoMerge extends AppCompatActivity {
             params = permissions.toArray(new String[permissions.size()]);
         }
         if (params != null && params.length > 0) {
-            ActivityCompat.requestPermissions(AudioVideoMerge.this,
+            ActivityCompat.requestPermissions(AudioVideoMergeActivity.this,
                     params,
                     100);
         }
@@ -144,7 +144,7 @@ public class AudioVideoMerge extends AppCompatActivity {
             params = permissions.toArray(new String[permissions.size()]);
         }
         if (params != null && params.length > 0) {
-            ActivityCompat.requestPermissions(AudioVideoMerge.this,
+            ActivityCompat.requestPermissions(AudioVideoMergeActivity.this,
                     params,
                     200);
         }
@@ -243,7 +243,7 @@ public class AudioVideoMerge extends AppCompatActivity {
     }
 
     private void showUnsupportedExceptionDialog() {
-        new AlertDialog.Builder(AudioVideoMerge.this)
+        new AlertDialog.Builder(AudioVideoMergeActivity.this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setTitle("Not Supported")
                 .setMessage("Device Not Supported")
@@ -251,7 +251,7 @@ public class AudioVideoMerge extends AppCompatActivity {
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        AudioVideoMerge.this.finish();
+                        AudioVideoMergeActivity.this.finish();
                     }
                 })
                 .create()
@@ -269,8 +269,8 @@ public class AudioVideoMerge extends AppCompatActivity {
 
         String filePrefix = "merge";
         String fileExtn = ".mp4";
-        String audioRealPath = getPath(AudioVideoMerge.this, selectedAudioUri);
-        String videoRealPath = getPath(AudioVideoMerge.this, selectedVideoUri);
+        String audioRealPath = getPath(AudioVideoMergeActivity.this, selectedAudioUri);
+        String videoRealPath = getPath(AudioVideoMergeActivity.this, selectedVideoUri);
         File dest = new File(moviesDir, filePrefix + fileExtn);
 
         int fileNo = 0;
@@ -342,7 +342,7 @@ public class AudioVideoMerge extends AppCompatActivity {
                 @Override
                 public void onSuccess(String s) {
                     Log.d(TAG, "SUCCESS with output : " + s);
-                    Intent intent = new Intent(AudioVideoMerge.this, PreviewActivity.class);
+                    Intent intent = new Intent(AudioVideoMergeActivity.this, VideoPreviewActivity.class);
                     intent.putExtra(FILEPATH, filePath);
                     startActivity(intent);
                 }

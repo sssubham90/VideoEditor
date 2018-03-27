@@ -544,7 +544,7 @@ public class VideoReverseActivity extends AppCompatActivity {
                         if (destDir.exists())
                             deleteDir(destDir);
                         choice = 11;
-                        Intent intent = new Intent(VideoReverseActivity.this, PreviewActivity.class);
+                        Intent intent = new Intent(VideoReverseActivity.this, VideoPreviewActivity.class);
                         intent.putExtra(FILEPATH, filePath);
                         startActivity(intent);
                     }

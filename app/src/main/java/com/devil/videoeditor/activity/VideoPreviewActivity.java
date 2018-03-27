@@ -12,7 +12,7 @@ import android.widget.VideoView;
 
 import com.devil.videoeditor.R;
 
-public class PreviewActivity extends AppCompatActivity {
+public class VideoPreviewActivity extends AppCompatActivity {
     private VideoView videoView;
     private SeekBar seekBar;
     private int stopPosition;
@@ -22,7 +22,7 @@ public class PreviewActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_preview);
+        setContentView(R.layout.activity_video_preview);
         if(getSupportActionBar()!=null){
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
