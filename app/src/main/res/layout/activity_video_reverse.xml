@@ -30,10 +30,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/videoView"
-            app:thumbDisabled="@mipmap/ic_launcher"
-            app:thumbPressed="@mipmap/ic_launcher"
-            app:thumbNormal="@mipmap/ic_launcher"
             android:layout_margin="@dimen/dp5"
+            app:activateOnDefaultValues="true"
             app:showLabels="false"
             rsb:activeColor="#ED1C24"
             rsb:textAboveThumbsColor="#000000" />
@@ -83,17 +81,17 @@
             android:textSize="@dimen/sp16" />
 
         <TextView
-            android:id="@+id/cropVideo"
+            android:id="@+id/reverseVideo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/uploadVideo"
             android:layout_centerHorizontal="true"
-            android:singleLine="true"
             android:layout_marginTop="30dp"
-            android:background="@drawable/crop_video_selector"
+            android:background="@drawable/reverse_video_selector"
             android:gravity="center"
             android:padding="@dimen/dp2"
-            android:text="@string/cutVideo"
+            android:singleLine="true"
+            android:text="@string/reverseVideo"
             android:textColor="#FFFFFF"
             android:textSize="@dimen/sp16" />
 

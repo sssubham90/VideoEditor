@@ -32,6 +32,7 @@
             android:layout_below="@+id/videoView"
             android:layout_marginTop="@dimen/dp5"
             app:showLabels="false"
+            app:activateOnDefaultValues="true"
             rsb:activeColor="#ED1C24"
             rsb:textAboveThumbsColor="#000000" />
 

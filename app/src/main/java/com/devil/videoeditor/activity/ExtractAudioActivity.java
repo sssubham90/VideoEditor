@@ -237,7 +237,7 @@ public class ExtractAudioActivity extends AppCompatActivity {
                         tvRight.setText(getTime(mp.getDuration() / 1000));
                         mp.setLooping(true);
                         rangeSeekBar.setRangeValues(0, duration);
-                        rangeSeekBar.setSelectedMinValue(1);
+                        rangeSeekBar.setSelectedMinValue(0);
                         rangeSeekBar.setSelectedMaxValue(duration);
                         rangeSeekBar.setEnabled(true);
 

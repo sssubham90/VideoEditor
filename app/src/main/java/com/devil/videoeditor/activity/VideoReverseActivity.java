@@ -1,6 +1,7 @@
 package com.devil.videoeditor.activity;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ContentUris;
 import android.content.Context;
@@ -8,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.drawable.ColorDrawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -23,6 +25,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.MediaController;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -34,6 +37,8 @@ import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
+
+import org.apache.commons.io.comparator.LastModifiedFileComparator;
 import org.florescu.android.rangeseekbar.RangeSeekBar;
 
 import java.io.File;
@@ -41,7 +46,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class CutVideoActivity extends AppCompatActivity {
+public class VideoReverseActivity extends AppCompatActivity {
 
 
     private static final int REQUEST_TAKE_GALLERY_VIDEO = 100;
@@ -52,22 +57,24 @@ public class CutVideoActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     private Uri selectedVideoUri;
     private static final String TAG = "DEVIL";
-    private static final String POSITION = "position";
     private static final String FILEPATH = "filepath";
+    private int choice = 0;
     private int stopPosition;
     private ScrollView mainlayout;
     private TextView tvLeft, tvRight;
     private String filePath;
     private int duration;
+    private Context mContext;
+    private String[] lastReverseCommand;
     private MediaController controller;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_cut_video);
+        setContentView(R.layout.activity_video_reverse);
+        mContext = this;
         TextView uploadVideo = findViewById(R.id.uploadVideo);
-        TextView cutVideo = findViewById(R.id.cropVideo);
-
+        TextView reverseVideo = findViewById(R.id.reverseVideo);
         tvLeft = findViewById(R.id.tvLeft);
         tvRight = findViewById(R.id.tvRight);
 
@@ -92,13 +99,30 @@ public class CutVideoActivity extends AppCompatActivity {
             }
         });
 
-
-        cutVideo.setOnClickListener(new View.OnClickListener() {
+        reverseVideo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (selectedVideoUri != null)
-                    executeCutVideoCommand(rangeSeekBar.getSelectedMinValue() * 1000, rangeSeekBar.getSelectedMaxValue() * 1000);
-                else
+                if (selectedVideoUri != null) {
+                    choice = 8;
+                    final Dialog dialog = showSingleOptionTextDialog(mContext);
+                    TextView tvDialogHeading = dialog.findViewById(R.id.tvDialogHeading);
+                    TextView tvDialogText = dialog.findViewById(R.id.tvDialogText);
+                    TextView tvDialogSubmit = dialog.findViewById(R.id.tvDialogSubmit);
+                    tvDialogHeading.setText("Process in Progress");
+                    tvDialogText.setText(R.string.dialogMessage);
+                    tvDialogSubmit.setText("Okay");
+                    tvDialogSubmit.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            String yourRealPath = getPath(VideoReverseActivity.this, selectedVideoUri);
+                            splitVideoCommand(yourRealPath);
+                            dialog.dismiss();
+                        }
+
+                    });
+                    dialog.show();
+
+                } else
                     Snackbar.make(mainlayout, "Please upload a video", 4000).show();
             }
         });
@@ -122,21 +146,62 @@ public class CutVideoActivity extends AppCompatActivity {
             params = permissions.toArray(new String[permissions.size()]);
         }
         if (params != null && params.length > 0) {
-            ActivityCompat.requestPermissions(CutVideoActivity.this,
+            ActivityCompat.requestPermissions(VideoReverseActivity.this,
                     params,
                     100);
         } else
             uploadVideo();
     }
+
+    private void getAudioPermission() {
+        String[] params = null;
+        String recordAudio = Manifest.permission.RECORD_AUDIO;
+        String modifyAudio = Manifest.permission.MODIFY_AUDIO_SETTINGS;
+
+        int hasRecordAudioPermission = ActivityCompat.checkSelfPermission(this, recordAudio);
+        int hasModifyAudioPermission = ActivityCompat.checkSelfPermission(this, modifyAudio);
+        List<String> permissions = new ArrayList<>();
+
+        if (hasRecordAudioPermission != PackageManager.PERMISSION_GRANTED)
+            permissions.add(recordAudio);
+        if (hasModifyAudioPermission != PackageManager.PERMISSION_GRANTED)
+            permissions.add(modifyAudio);
+
+        if (!permissions.isEmpty()) {
+            params = permissions.toArray(new String[permissions.size()]);
+        }
+        if (params != null && params.length > 0) {
+            ActivityCompat.requestPermissions(VideoReverseActivity.this,
+                    params,
+                    200);
+        } else
+            extractAudioVideo();
+    }
+
     /**
      * Handling response for permission request
      */
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String permissions[], @NonNull int[] grantResults) {
-        if (requestCode==100&&grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            uploadVideo();
+        switch (requestCode) {
+            case 100: {
+
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    uploadVideo();
+                }
+            }
+            break;
+            case 200: {
+
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    extractAudioVideo();
+                }
+            }
+
+
         }
     }
 
@@ -182,7 +247,8 @@ public class CutVideoActivity extends AppCompatActivity {
 
                     @Override
                     public void onPrepared(MediaPlayer mp) {
-                        controller = new MediaController(CutVideoActivity.this);
+                        // TODO Auto-generated method stub
+                        controller = new MediaController(VideoReverseActivity.this);
                         controller.setAnchorView(videoView);
                         videoView.setMediaController(controller);
                         duration = mp.getDuration() / 1000;
@@ -191,7 +257,7 @@ public class CutVideoActivity extends AppCompatActivity {
                         tvRight.setText(getTime(mp.getDuration() / 1000));
                         mp.setLooping(true);
                         rangeSeekBar.setRangeValues(0, duration);
-                        rangeSeekBar.setSelectedMinValue(1);
+                        rangeSeekBar.setSelectedMinValue(0);
                         rangeSeekBar.setSelectedMaxValue(duration);
                         rangeSeekBar.setEnabled(true);
 
@@ -256,7 +322,7 @@ public class CutVideoActivity extends AppCompatActivity {
     }
 
     private void showUnsupportedExceptionDialog() {
-        new AlertDialog.Builder(CutVideoActivity.this)
+        new AlertDialog.Builder(VideoReverseActivity.this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setTitle("Not Supported")
                 .setMessage("Device Not Supported")
@@ -264,7 +330,7 @@ public class CutVideoActivity extends AppCompatActivity {
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        CutVideoActivity.this.finish();
+                        VideoReverseActivity.this.finish();
                     }
                 })
                 .create()
@@ -282,7 +348,7 @@ public class CutVideoActivity extends AppCompatActivity {
 
         String filePrefix = "cut_video";
         String fileExtn = ".mp4";
-        String yourRealPath = getPath(CutVideoActivity.this, selectedVideoUri);
+        String yourRealPath = getPath(VideoReverseActivity.this, selectedVideoUri);
         File dest = new File(moviesDir, filePrefix + fileExtn);
         int fileNo = 0;
         while (dest.exists()) {
@@ -295,10 +361,156 @@ public class CutVideoActivity extends AppCompatActivity {
         Log.d(TAG, "startTrim: startMs: " + startMs);
         Log.d(TAG, "startTrim: endMs: " + endMs);
         filePath = dest.getAbsolutePath();
+        //String[] complexCommand = {"-i", yourRealPath, "-ss", "" + startMs / 1000, "-t", "" + endMs / 1000, dest.getAbsolutePath()};
         String[] complexCommand = {"-ss", "" + startMs / 1000, "-y", "-i", yourRealPath, "-t", "" + (endMs - startMs) / 1000,"-vcodec", "mpeg4", "-b:v", "2097152", "-b:a", "48000", "-ac", "2", "-ar", "22050", filePath};
 
         execFFmpegBinary(complexCommand);
 
+    }
+
+    /**
+     * Command for compressing video
+     */
+    private void executeCompressCommand() {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MOVIES
+        );
+
+        String filePrefix = "compress_video";
+        String fileExtn = ".mp4";
+        String yourRealPath = getPath(VideoReverseActivity.this, selectedVideoUri);
+
+
+        File dest = new File(moviesDir, filePrefix + fileExtn);
+        int fileNo = 0;
+        while (dest.exists()) {
+            fileNo++;
+            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
+        }
+
+        Log.d(TAG, "startTrim: src: " + yourRealPath);
+        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
+        filePath = dest.getAbsolutePath();
+        String[] complexCommand = {"-y", "-i", yourRealPath, "-s", "160x120", "-r", "25", "-vcodec", "mpeg4", "-b:v", "150k", "-b:a", "48000", "-ac", "2", "-ar", "22050", filePath};
+        execFFmpegBinary(complexCommand);
+
+    }private void extractAudioVideo() {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MUSIC
+        );
+
+        String filePrefix = "extract_audio";
+        String fileExtn = ".mp3";
+        String yourRealPath = getPath(VideoReverseActivity.this, selectedVideoUri);
+        File dest = new File(moviesDir, filePrefix + fileExtn);
+
+        int fileNo = 0;
+        while (dest.exists()) {
+            fileNo++;
+            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
+        }
+        Log.d(TAG, "startTrim: src: " + yourRealPath);
+        Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
+        filePath = dest.getAbsolutePath();
+
+        String[] complexCommand = {"-y", "-i", yourRealPath, "-vn", "-ar", "44100", "-ac", "2", "-b:a", "256k", "-f", "mp3", filePath};
+
+        execFFmpegBinary(complexCommand);
+
+    }
+
+    /**
+     * Command for segmenting video
+     */
+    private void splitVideoCommand(String path) {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MOVIES
+        );
+        String filePrefix = "split_video";
+        String fileExtn = ".mp4";
+
+        File dir = new File(moviesDir, ".VideoSplit");
+        if (dir.exists())
+            deleteDir(dir);
+        dir.mkdir();
+        File dest = new File(dir, filePrefix + "%03d" + fileExtn);
+
+        String[] complexCommand = {"-i", path, "-c:v", "libx264", "-crf", "22", "-map", "0", "-segment_time", "6", "-g", "9", "-sc_threshold", "0", "-force_key_frames", "expr:gte(t,n_forced*6)", "-f", "segment", dest.getAbsolutePath()};
+        execFFmpegBinary(complexCommand);
+    }
+
+    /**
+     * Command for reversing segmented videos
+     */
+    private void reverseVideoCommand() {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MOVIES
+        );
+        File srcDir = new File(moviesDir, ".VideoSplit");
+        File[] files = srcDir.listFiles();
+        String filePrefix = "reverse_video";
+        String fileExtn = ".mp4";
+        File destDir = new File(moviesDir, ".VideoPartsReverse");
+        if (destDir.exists())
+            deleteDir(destDir);
+        destDir.mkdir();
+        for (int i = 0; i < files.length; i++) {
+            File dest = new File(destDir, filePrefix + i + fileExtn);
+            String command[] = {"-i", files[i].getAbsolutePath(), "-vf", "reverse", "-af", "areverse", dest.getAbsolutePath()};
+            if (i == files.length - 1)
+                lastReverseCommand = command;
+            execFFmpegBinary(command);
+        }
+
+
+    }
+
+    /**
+     * Command for concating reversed segmented videos
+     */
+    private void concatVideoCommand() {
+        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MOVIES
+        );
+        File srcDir = new File(moviesDir, ".VideoPartsReverse");
+        File[] files = srcDir.listFiles();
+        if (files != null && files.length > 1) {
+            Arrays.sort(files, LastModifiedFileComparator.LASTMODIFIED_REVERSE);
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder filterComplex = new StringBuilder();
+        filterComplex.append("-filter_complex,");
+
+        if (files != null) {
+            for (int i = 0; i < files.length; i++) {
+                stringBuilder.append("-i" + ",").append(files[i].getAbsolutePath()).append(",");
+                filterComplex.append("[").append(i).append(":v").append(i).append("] [").append(i).append(":a").append(i).append("] ");
+
+            }
+            filterComplex.append("concat=n=").append(files.length).append(":v=1:a=1 [v] [a]");
+        }
+        String[] inputCommand = stringBuilder.toString().split(",");
+        String[] filterCommand = filterComplex.toString().split(",");
+
+        String filePrefix = "reverse_video";
+        String fileExtn = ".mp4";
+        File dest = new File(moviesDir, filePrefix + fileExtn);
+        int fileNo = 0;
+        while (dest.exists()) {
+            fileNo++;
+            dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
+        }
+        filePath = dest.getAbsolutePath();
+        String[] destinationCommand = {"-map", "[v]", "-map", "[a]", dest.getAbsolutePath()};
+        execFFmpegBinary(combine(inputCommand, filterCommand, destinationCommand));
+    }
+
+    public static String[] combine(String[] arg1, String[] arg2, String[] arg3) {
+        String[] result = new String[arg1.length + arg2.length + arg3.length];
+        System.arraycopy(arg1, 0, result, 0, arg1.length);
+        System.arraycopy(arg2, 0, result, arg1.length, arg2.length);
+        System.arraycopy(arg3, 0, result, arg1.length + arg2.length, arg3.length);
+        return result;
     }
 
     /**
@@ -315,15 +527,40 @@ public class CutVideoActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String s) {
                     Log.d(TAG, "SUCCESS with output : " + s);
-                    Intent intent = new Intent(CutVideoActivity.this, PreviewActivity.class);
-                    intent.putExtra(FILEPATH, filePath);
-                    startActivity(intent);
+                    if (choice == 8) {
+                        choice = 9;
+                        reverseVideoCommand();
+                    } else if (Arrays.equals(command, lastReverseCommand)) {
+                        choice = 10;
+                        concatVideoCommand();
+                    } else if (choice == 10) {
+                        File moviesDir = Environment.getExternalStoragePublicDirectory(
+                                Environment.DIRECTORY_MOVIES
+                        );
+                        File destDir = new File(moviesDir, ".VideoPartsReverse");
+                        File dir = new File(moviesDir, ".VideoSplit");
+                        if (dir.exists())
+                            deleteDir(dir);
+                        if (destDir.exists())
+                            deleteDir(destDir);
+                        choice = 11;
+                        Intent intent = new Intent(VideoReverseActivity.this, PreviewActivity.class);
+                        intent.putExtra(FILEPATH, filePath);
+                        startActivity(intent);
+                    }
                 }
 
                 @Override
                 public void onProgress(String s) {
                     Log.d(TAG, "Started command : ffmpeg " + Arrays.toString(command));
-                    progressDialog.setMessage("progress : " + s);
+                    if (choice == 8)
+                        progressDialog.setMessage("progress : splitting video " + s);
+                    else if (choice == 9)
+                        progressDialog.setMessage("progress : reversing splitted videos " + s);
+                    else if (choice == 10)
+                        progressDialog.setMessage("progress : concatenating reversed videos " + s);
+                    else
+                        progressDialog.setMessage("progress : " + s);
                     Log.d(TAG, "progress : " + s);
                 }
 
@@ -337,13 +574,31 @@ public class CutVideoActivity extends AppCompatActivity {
                 @Override
                 public void onFinish() {
                     Log.d(TAG, "Finished command : ffmpeg " + Arrays.toString(command));
-                    progressDialog.dismiss();
+                    if (choice != 8 && choice != 9 && choice != 10) {
+                        progressDialog.dismiss();
+                    }
 
                 }
             });
         } catch (FFmpegCommandAlreadyRunningException e) {
             // do nothing for now
         }
+    }
+
+
+    public static boolean deleteDir(File dir) {
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            if (children != null) {
+                for (String aChildren : children) {
+                    boolean success = deleteDir(new File(dir, aChildren));
+                    if (!success) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return dir.delete();
     }
 
     /**
@@ -360,14 +615,20 @@ public class CutVideoActivity extends AppCompatActivity {
                     final String docId = DocumentsContract.getDocumentId(uri);
                     final String[] split = docId.split(":");
                     final String type = split[0];
+
                     if ("primary".equalsIgnoreCase(type)) {
                         return Environment.getExternalStorageDirectory() + "/" + split[1];
                     }
+
+                    // TODO handle non-primary volumes
                 }
                 // DownloadsProvider
                 else if (isDownloadsDocument(uri)) {
+
                     final String id = DocumentsContract.getDocumentId(uri);
-                    final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.parseLong(id));
+                    final Uri contentUri = ContentUris.withAppendedId(
+                            Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+
                     return getDataColumn(context, contentUri, null, null);
                 }
                 // MediaProvider
@@ -456,4 +717,16 @@ public class CutVideoActivity extends AppCompatActivity {
     private boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
+
+    private Dialog showSingleOptionTextDialog(Context mContext) {
+        Dialog textDialog = new Dialog(mContext, R.style.DialogAnimation);
+        if(textDialog.getWindow()!=null){
+        textDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        textDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+        textDialog.setContentView(R.layout.dialog_singleoption_text);
+        textDialog.setCancelable(false);
+        return textDialog;
+    }
+
 }

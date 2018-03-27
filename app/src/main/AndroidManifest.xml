@@ -30,9 +30,9 @@
         <activity
             android:name=".activity.AudioPreviewActivity"
             android:screenOrientation="portrait" />
-        <activity android:name=".activity.CutVideoActivity" />
+        <activity android:name=".activity.VideoCutterActivity" />
         <activity android:name=".activity.ExtractAudioActivity" />
-        <activity android:name=".activity.ReverseVideoActivity" />
+        <activity android:name=".activity.VideoReverseActivity" />
         <activity android:name=".activity.AudioCutterActivity" />
         <activity android:name=".activity.AudioVideoMerge"></activity>
     </application>
