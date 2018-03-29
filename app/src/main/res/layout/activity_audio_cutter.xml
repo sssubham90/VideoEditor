@@ -26,6 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
+            app:alwaysActive="true"
             android:layout_margin="@dimen/dp5"
             app:showLabels="false"
             rsb:activeColor="#ED1C24"

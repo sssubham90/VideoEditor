@@ -10,8 +10,6 @@
     android:fillViewport="true">
 
     <RelativeLayout
-
-
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -29,12 +27,12 @@
             android:id="@+id/rangeSeekBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/videoView"
-            app:thumbDisabled="@mipmap/ic_launcher"
-            app:thumbPressed="@mipmap/ic_launcher"
-            app:thumbNormal="@mipmap/ic_launcher"
-            android:layout_margin="@dimen/dp5"
+            android:layout_centerVertical="true"
             app:showLabels="false"
+            app:thumbDisabled="@mipmap/ic_launcher"
+            app:thumbNormal="@mipmap/ic_launcher"
+            app:thumbPressed="@mipmap/ic_launcher"
+            app:alwaysActive="true"
             rsb:activeColor="#ED1C24"
             rsb:textAboveThumbsColor="#000000" />
 

@@ -11,6 +11,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
+    <VideoView
+        android:id="@+id/videoView"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp200"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="@dimen/dp20"
+        android:layout_marginRight="@dimen/dp20"
+        android:layout_marginTop="@dimen/dp5" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -52,7 +52,6 @@ public class VideoCutterActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     private Uri selectedVideoUri;
     private static final String TAG = "DEVIL";
-    private static final String POSITION = "position";
     private static final String FILEPATH = "filepath";
     private int stopPosition;
     private ScrollView mainlayout;
@@ -67,12 +66,9 @@ public class VideoCutterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_video_cutter);
         TextView uploadVideo = findViewById(R.id.uploadVideo);
         TextView cutVideo = findViewById(R.id.cropVideo);
-
         tvLeft = findViewById(R.id.tvLeft);
         tvRight = findViewById(R.id.tvRight);
-
         videoView = findViewById(R.id.videoView);
-
         rangeSeekBar = findViewById(R.id.rangeSeekBar);
         mainlayout = findViewById(R.id.mainlayout);
         progressDialog = new ProgressDialog(this);
@@ -80,7 +76,6 @@ public class VideoCutterActivity extends AppCompatActivity {
         progressDialog.setCancelable(false);
         rangeSeekBar.setEnabled(false);
         loadFFMpegBinary();
-
         uploadVideo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

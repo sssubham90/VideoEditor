@@ -23,8 +23,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.MediaController;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 import com.devil.videoeditor.R;
 import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
@@ -42,6 +44,7 @@ public class AudioVideoMergeActivity extends AppCompatActivity {
 
     private static final int REQUEST_TAKE_GALLERY_AUDIO = 100;
     private static final int REQUEST_TAKE_GALLERY_VIDEO = 200;
+    private VideoView videoView;
     private FFmpeg ffmpeg;
     private ProgressDialog progressDialog;
     private static final String TAG = "DEVIL";
@@ -51,6 +54,8 @@ public class AudioVideoMergeActivity extends AppCompatActivity {
     private String filePath;
     private CheckBox choice;
     private ScrollView mainlayout;
+    private MediaController controller;
+    private int stopPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,9 +63,11 @@ public class AudioVideoMergeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_audio_video_merge);
         TextView uploadAudio = findViewById(R.id.uploadAudio);
         TextView uploadVideo = findViewById(R.id.uploadVideo);
-        final TextView merge = findViewById(R.id.merge);
+        TextView merge = findViewById(R.id.merge);
+        videoView = findViewById(R.id.videoView);
         mainlayout = findViewById(R.id.mainlayout);
         choice = findViewById(R.id.choice);
+        mainlayout = findViewById(R.id.mainlayout);
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle(null);
         progressDialog.setCancelable(false);
@@ -97,6 +104,20 @@ public class AudioVideoMergeActivity extends AppCompatActivity {
                     mergeAudioVideo();
             }
         });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopPosition = videoView.getCurrentPosition(); //stopPosition is an int
+        videoView.pause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        videoView.seekTo(stopPosition);
+        videoView.start();
     }
 
     private void getAudioPermission() {
@@ -191,6 +212,15 @@ public class AudioVideoMergeActivity extends AppCompatActivity {
 
         }
     }
+
+    private String getTime(int seconds) {
+        int hr = seconds / 3600;
+        int rem = seconds % 3600;
+        int mn = rem / 60;
+        int sec = rem % 60;
+        return String.format("%02d", hr) + ":" + String.format("%02d", mn) + ":" + String.format("%02d", sec);
+    }
+
     private void uploadVideo() {
         try {
             Intent intent = new Intent();
@@ -201,7 +231,7 @@ public class AudioVideoMergeActivity extends AppCompatActivity {
 
         }
     }
-    
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -211,6 +241,18 @@ public class AudioVideoMergeActivity extends AppCompatActivity {
             }
             else if (requestCode == REQUEST_TAKE_GALLERY_VIDEO) {
                 selectedVideoUri = data.getData();
+                videoView.setVideoURI(selectedVideoUri);
+                videoView.start();
+                videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        controller = new MediaController(AudioVideoMergeActivity.this);
+                        controller.setAnchorView(videoView);
+                        videoView.setMediaController(controller);
+                        mp.setLooping(true);
+                    }
+                });
             }
         }
     }
