@@ -281,13 +281,11 @@ public class AudioVideoMergeActivity extends AppCompatActivity {
         Log.d(TAG, "src: audio:" + audioRealPath + "& video:" + videoRealPath);
         Log.d(TAG, "dest: " + dest.getAbsolutePath());
         filePath = dest.getAbsolutePath();
-        final String[] complexCommand1 = {"-y", "-i", videoRealPath, "-i", audioRealPath, "-c:v", "copy", "-c:a", "aac", "-strict", "experimental",
-        "-map", "0:v:0", "-map", "1:a:0", "-shortest", filePath};
+        final String[] complexCommand1 = {"-i", videoRealPath, "-i", audioRealPath, "-c", "copy", "-map", "0:v:0", "-map", "1:a:0", "-shortest", filePath};
         final String[] complexCommand2 = {"-y", "-i", videoRealPath, "-i", audioRealPath, "-c:v", "copy", "-c:a", "aac","-filter_complex", "[0:a][1:a]amerge=inputs=2[a]",
-        "-map", "0:v:0", "-map", "[a]", "-shortest", filePath};
+                "-map", "0:v:0", "-map", "[a]", "-shortest", filePath};
 
-        final String[] complexCommand3 = {"-y", "-i", videoRealPath, "-i", audioRealPath, "-c:v", "copy", "-c:a", "aac", "-strict", "experimental",
-                "-map", "0:v:0", "-map", "1:a:0", filePath};
+        final String[] complexCommand3 = {"-i", videoRealPath, "-i", audioRealPath, "-c", "copy", "-map", "0:v:0", "-map", "1:a:0", filePath};
         final String[] complexCommand4 = {"-y", "-i", videoRealPath, "-i", audioRealPath, "-c:v", "copy", "-c:a", "aac","-filter_complex", "[0:a][1:a]amerge=inputs=2[a]",
                 "-map", "0:v:0", "-map", "[a]", filePath};
         MediaPlayer mp;

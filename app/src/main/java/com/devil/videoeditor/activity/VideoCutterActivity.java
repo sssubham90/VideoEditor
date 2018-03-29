@@ -295,7 +295,7 @@ public class VideoCutterActivity extends AppCompatActivity {
         Log.d(TAG, "startTrim: startMs: " + startMs);
         Log.d(TAG, "startTrim: endMs: " + endMs);
         filePath = dest.getAbsolutePath();
-        String[] complexCommand = {"-ss", "" + startMs / 1000, "-y", "-i", yourRealPath, "-t", "" + (endMs - startMs) / 1000,"-vcodec", "mpeg4", "-b:v", "2097152", "-b:a", "48000", "-ac", "2", "-ar", "22050", filePath};
+        String[] complexCommand = {"-i", yourRealPath, "-ss", "" + startMs / 1000, "-t", "" + (endMs - startMs) / 1000,"-vcodec", "copy", "-acodec", "copy", filePath};
 
         execFFmpegBinary(complexCommand);
 

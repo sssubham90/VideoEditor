@@ -33,7 +33,6 @@
             app:thumbDisabled="@mipmap/ic_launcher"
             app:thumbPressed="@mipmap/ic_launcher"
             app:thumbNormal="@mipmap/ic_launcher"
-            app:activateOnDefaultValues="true"
             android:layout_margin="@dimen/dp5"
             app:showLabels="false"
             rsb:activeColor="#ED1C24"

@@ -102,7 +102,7 @@ public class ExtractAudioActivity extends AppCompatActivity {
                     if (Build.VERSION.SDK_INT >= 23)
                         getAudioPermission();
                     else
-                        extractAudioVideo();
+                        extractAudioVideo(rangeSeekBar.getSelectedMinValue()*1000,rangeSeekBar.getSelectedMaxValue() * 1000);
                 } else
                     Snackbar.make(mainlayout, "Please upload a video", 4000).show();
             }
@@ -156,7 +156,7 @@ public class ExtractAudioActivity extends AppCompatActivity {
                     params,
                     200);
         } else
-            extractAudioVideo();
+            extractAudioVideo(rangeSeekBar.getSelectedMinValue()*1000,rangeSeekBar.getSelectedMaxValue() * 1000);
     }
 
     /**
@@ -178,7 +178,7 @@ public class ExtractAudioActivity extends AppCompatActivity {
 
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    extractAudioVideo();
+                    extractAudioVideo(rangeSeekBar.getSelectedMinValue()*1000,rangeSeekBar.getSelectedMaxValue() * 1000);
                 }
             }
 
@@ -321,13 +321,13 @@ public class ExtractAudioActivity extends AppCompatActivity {
     /**
      * Command for extracting audio from video
      */
-    private void extractAudioVideo() {
+    private void extractAudioVideo(int startMs, int endMs) {
         File moviesDir = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_MUSIC
         );
 
         String filePrefix = "extract_audio";
-        String fileExtn = ".mp3";
+        String fileExtn = ".aac";
         String yourRealPath = getPath(ExtractAudioActivity.this, selectedVideoUri);
         File dest = new File(moviesDir, filePrefix + fileExtn);
 
@@ -339,9 +339,7 @@ public class ExtractAudioActivity extends AppCompatActivity {
         Log.d(TAG, "startTrim: src: " + yourRealPath);
         Log.d(TAG, "startTrim: dest: " + dest.getAbsolutePath());
         filePath = dest.getAbsolutePath();
-
-        String[] complexCommand = {"-y", "-i", yourRealPath, "-vn", "-ar", "44100", "-ac", "2", "-b:a", "256k", "-f", "mp3", filePath};
-
+        String[] complexCommand = {"-i", yourRealPath, "-ss", "" + startMs / 1000, "-t", "" + (endMs - startMs) / 1000, "-vn", "-acodec", "copy", filePath};
         execFFmpegBinary(complexCommand);
 
     }

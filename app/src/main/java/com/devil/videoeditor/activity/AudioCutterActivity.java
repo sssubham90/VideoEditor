@@ -71,7 +71,7 @@ public class AudioCutterActivity extends AppCompatActivity {
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle(null);
         progressDialog.setCancelable(false);
-        rangeSeekBar.setEnabled(true);
+        rangeSeekBar.setEnabled(false);
         loadFFMpegBinary();
 
         uploadAudio.setOnClickListener(new View.OnClickListener() {
@@ -285,7 +285,7 @@ public class AudioCutterActivity extends AppCompatActivity {
         Log.d(TAG, "startTrim: startMs: " + startMs);
         Log.d(TAG, "startTrim: endMs: " + endMs);
         filePath = dest.getAbsolutePath();
-        String[] complexCommand = {"-ss", "" + startMs / 1000, "-y", "-i", yourRealPath, "-t", "" + (endMs - startMs) / 1000, filePath};
+        String[] complexCommand = {"-i", yourRealPath, "-ss", "" + startMs / 1000, "-t", "" + (endMs - startMs) / 1000, "-acodec", "copy", filePath};
 
         execFFmpegBinary(complexCommand);
 

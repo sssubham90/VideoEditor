@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void launchActivity1() {
-        Intent click1 = new Intent(this, VideoCutterActivity.class);
+        Intent click1 = new Intent(this, AudioVideoMergeActivity.class);
         startActivity(click1);
     }
 
