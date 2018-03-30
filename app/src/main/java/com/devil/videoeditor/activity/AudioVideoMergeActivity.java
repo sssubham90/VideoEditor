@@ -36,7 +36,6 @@ import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunnin
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.InterstitialAd;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -219,14 +218,6 @@ public class AudioVideoMergeActivity extends AppCompatActivity {
         } catch (Exception ignored) {
 
         }
-    }
-
-    private String getTime(int seconds) {
-        int hr = seconds / 3600;
-        int rem = seconds % 3600;
-        int mn = rem / 60;
-        int sec = rem % 60;
-        return String.format("%02d", hr) + ":" + String.format("%02d", mn) + ":" + String.format("%02d", sec);
     }
 
     private void uploadVideo() {

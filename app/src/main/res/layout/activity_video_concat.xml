@@ -42,7 +42,7 @@
             android:textSize="@dimen/sp16" />
 
         <TextView
-            android:id="@+id/uploadAudio"
+            android:id="@+id/uploadVideo1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:singleLine="true"
@@ -50,13 +50,13 @@
             android:background="@drawable/upload_video_selector"
             android:gravity="center"
             android:padding="@dimen/dp5"
-            android:text="@string/uploadAudio"
+            android:text="@string/uploadVideo"
             android:textColor="#FFFFFF"
             android:textSize="@dimen/sp16" />
     </LinearLayout>
 
     <TextView
-        android:id="@+id/merge"
+        android:id="@+id/join"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/linearLayout"
@@ -66,7 +66,7 @@
         android:gravity="center"
         android:padding="@dimen/dp5"
         android:singleLine="true"
-        android:text="@string/merge"
+        android:text="@string/join"
         android:textColor="#FFFFFF"
         android:textSize="@dimen/sp16" />
 
@@ -74,7 +74,7 @@
         android:id="@+id/choice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/merge"
+        android:layout_below="@+id/join"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
         android:text="Keep original audio source." />

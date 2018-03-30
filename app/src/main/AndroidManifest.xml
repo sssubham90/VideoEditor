@@ -33,9 +33,9 @@
             android:screenOrientation="portrait" />
         <activity android:name=".activity.VideoCutterActivity" />
         <activity android:name=".activity.ExtractAudioActivity" />
-        <activity android:name=".activity.VideoReverseActivity" />
         <activity android:name=".activity.AudioCutterActivity" />
-        <activity android:name=".activity.AudioVideoMergeActivity"></activity>
+        <activity android:name=".activity.AudioVideoMergeActivity"/>
+        <activity android:name=".activity.VideoConcatActivity" />
     </application>
 
 </manifest>

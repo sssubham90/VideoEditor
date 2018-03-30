@@ -1,7 +1,6 @@
 package com.devil.videoeditor.activity;
 
 import android.Manifest;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ContentUris;
 import android.content.Context;
@@ -9,13 +8,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.drawable.ColorDrawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -25,7 +22,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.MediaController;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.VideoView;
@@ -38,106 +36,98 @@ import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunnin
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.InterstitialAd;
-
-import org.apache.commons.io.comparator.LastModifiedFileComparator;
-import org.florescu.android.rangeseekbar.RangeSeekBar;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+public class VideoConcatActivity extends AppCompatActivity {
 
-public class VideoReverseActivity extends AppCompatActivity {
-
-
-    private static final int REQUEST_TAKE_GALLERY_VIDEO = 100;
+    private static final int REQUEST_TAKE_GALLERY_VIDEO1 = 100;
+    private static final int REQUEST_TAKE_GALLERY_VIDEO = 200;
     private VideoView videoView;
-    private RangeSeekBar<Integer> rangeSeekBar;
-    private Runnable r;
     private FFmpeg ffmpeg;
     private ProgressDialog progressDialog;
-    private Uri selectedVideoUri;
-    private static final String TAG = "BHUVNESH";
+    private static final String TAG = "DEVIL";
     private static final String FILEPATH = "filepath";
-    private int choice = 0;
-    private int stopPosition;
-    private ScrollView mainlayout;
-    private TextView tvLeft, tvRight;
+    private Uri selectedVideo1Uri;
+    private Uri selectedVideoUri;
     private String filePath;
-    private int duration;
-    private Context mContext;
-    private String[] lastReverseCommand;
+    private CheckBox choice;
+    private ScrollView mainlayout;
+    private MediaController controller;
+    private int stopPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_video_reverse);
+        setContentView(R.layout.activity_video_concat);
         AdView mAdView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder()
                 .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
                 .build();
         mAdView.loadAd(adRequest);
-        mContext = this;
+        TextView uploadVideo1 = findViewById(R.id.uploadVideo1);
         TextView uploadVideo = findViewById(R.id.uploadVideo);
-        TextView reverseVideo = findViewById(R.id.reverseVideo);
-
-
-        tvLeft = findViewById(R.id.tvLeft);
-        tvRight = findViewById(R.id.tvRight);
-
+        TextView join = findViewById(R.id.join);
         videoView = findViewById(R.id.videoView);
-        rangeSeekBar = findViewById(R.id.rangeSeekBar);
+        mainlayout = findViewById(R.id.mainlayout);
+        choice = findViewById(R.id.choice);
         mainlayout = findViewById(R.id.mainlayout);
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle(null);
         progressDialog.setCancelable(false);
-        rangeSeekBar.setEnabled(false);
         loadFFMpegBinary();
 
+        uploadVideo1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= 23)
+                    getVideo1Permission();
+                else
+                    uploadVideo1();
+
+            }
+        });
         uploadVideo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (Build.VERSION.SDK_INT >= 23)
-                    getPermission();
+                    getVideoPermission();
                 else
                     uploadVideo();
 
             }
         });
-
-
-        reverseVideo.setOnClickListener(new View.OnClickListener() {
+        join.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (selectedVideoUri != null) {
-                    choice = 8;
-                    final Dialog dialog = showSingleOptionTextDialog(mContext);
-                    TextView tvDialogHeading = dialog.findViewById(R.id.tvDialogHeading);
-                    TextView tvDialogText = dialog.findViewById(R.id.tvDialogText);
-                    TextView tvDialogSubmit = dialog.findViewById(R.id.tvDialogSubmit);
-                    tvDialogHeading.setText("Process in Progress");
-                    tvDialogText.setText(R.string.dialogMessage);
-                    tvDialogSubmit.setText("Okay");
-                    tvDialogSubmit.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            String yourRealPath = getPath(VideoReverseActivity.this, selectedVideoUri);
-                            splitVideoCommand(yourRealPath);
-                            dialog.dismiss();
-                        }
-
-                    });
-                    dialog.show();
-
-                } else
+                if(selectedVideo1Uri == null )
+                    Snackbar.make(mainlayout, "Please upload a audio", 4000).show();
+                else if(selectedVideoUri == null)
                     Snackbar.make(mainlayout, "Please upload a video", 4000).show();
+                else
+                    joinVideos();
             }
         });
     }
 
-    private void getPermission() {
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopPosition = videoView.getCurrentPosition(); //stopPosition is an int
+        videoView.pause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        videoView.seekTo(stopPosition);
+        videoView.start();
+    }
+
+    private void getVideo1Permission() {
         String[] params = null;
         String writeExternalStorage = Manifest.permission.WRITE_EXTERNAL_STORAGE;
         String readExternalStorage = Manifest.permission.READ_EXTERNAL_STORAGE;
@@ -155,11 +145,40 @@ public class VideoReverseActivity extends AppCompatActivity {
             params = permissions.toArray(new String[permissions.size()]);
         }
         if (params != null && params.length > 0) {
-            ActivityCompat.requestPermissions(VideoReverseActivity.this,
+            ActivityCompat.requestPermissions(VideoConcatActivity.this,
                     params,
                     100);
-        } else
+        }
+        else{
+            uploadVideo1();
+        }
+    }
+
+    private void getVideoPermission() {
+        String[] params = null;
+        String writeExternalStorage = Manifest.permission.WRITE_EXTERNAL_STORAGE;
+        String readExternalStorage = Manifest.permission.READ_EXTERNAL_STORAGE;
+
+        int hasWriteExternalStoragePermission = ActivityCompat.checkSelfPermission(this, writeExternalStorage);
+        int hasReadExternalStoragePermission = ActivityCompat.checkSelfPermission(this, readExternalStorage);
+        List<String> permissions = new ArrayList<>();
+
+        if (hasWriteExternalStoragePermission != PackageManager.PERMISSION_GRANTED)
+            permissions.add(writeExternalStorage);
+        if (hasReadExternalStoragePermission != PackageManager.PERMISSION_GRANTED)
+            permissions.add(readExternalStorage);
+
+        if (!permissions.isEmpty()) {
+            params = permissions.toArray(new String[permissions.size()]);
+        }
+        if (params != null && params.length > 0) {
+            ActivityCompat.requestPermissions(VideoConcatActivity.this,
+                    params,
+                    200);
+        }
+        else{
             uploadVideo();
+        }
     }
 
     /**
@@ -168,15 +187,39 @@ public class VideoReverseActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String permissions[], @NonNull int[] grantResults) {
-        if (requestCode==100 && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            uploadVideo();
+        switch (requestCode) {
+            case 100: {
+
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    uploadVideo1();
+                }
+            }
+            break;
+            case 200: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    uploadVideo();
+                }
+            }
+            break;
         }
     }
 
     /**
-     * Opening gallery for uploading video
+     * Opening gallery for uploading video and audio
      */
+    private void uploadVideo1() {
+        try {
+            Intent intent = new Intent();
+            intent.setType("video/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(intent, "Select Audio"), REQUEST_TAKE_GALLERY_VIDEO1);
+        } catch (Exception ignored) {
+
+        }
+    }
+
     private void uploadVideo() {
         try {
             Intent intent = new Intent();
@@ -189,78 +232,40 @@ public class VideoReverseActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        stopPosition = videoView.getCurrentPosition(); //stopPosition is an int
-        videoView.pause();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        videoView.seekTo(stopPosition);
-        videoView.start();
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            if (requestCode == REQUEST_TAKE_GALLERY_VIDEO) {
-                selectedVideoUri = data.getData();
-                videoView.setVideoURI(selectedVideoUri);
+            if (requestCode == REQUEST_TAKE_GALLERY_VIDEO1) {
+                selectedVideo1Uri = data.getData();
+                videoView.setVideoURI(selectedVideo1Uri);
                 videoView.start();
-
-
                 videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
 
                     @Override
                     public void onPrepared(MediaPlayer mp) {
-                        // TODO Auto-generated method stub
-                        duration = mp.getDuration() / 1000;
-                        tvLeft.setText("00:00:00");
-
-                        tvRight.setText(getTime(mp.getDuration() / 1000));
+                        controller = new MediaController(VideoConcatActivity.this);
+                        controller.setAnchorView(videoView);
+                        videoView.setMediaController(controller);
                         mp.setLooping(true);
-                        rangeSeekBar.setRangeValues(0, duration);
-                        rangeSeekBar.setSelectedMinValue(0);
-                        rangeSeekBar.setSelectedMaxValue(duration);
-                        rangeSeekBar.setEnabled(true);
-
-                        rangeSeekBar.setOnRangeSeekBarChangeListener(new RangeSeekBar.OnRangeSeekBarChangeListener<Integer>() {
-                            @Override
-                            public void onRangeSeekBarValuesChanged(RangeSeekBar<?> bar, Integer minValue, Integer maxValue) {
-                                videoView.seekTo(minValue * 1000);
-                                tvLeft.setText(getTime((Integer)bar.getSelectedMinValue()));
-                                tvRight.setText(getTime((Integer)bar.getSelectedMaxValue()));
-                            }
-                        });
-
-                        final Handler handler = new Handler();
-                        handler.postDelayed(r = new Runnable() {
-                            @Override
-                            public void run() {
-
-                                if (videoView.getCurrentPosition() >= rangeSeekBar.getSelectedMaxValue() * 1000)
-                                    videoView.seekTo(rangeSeekBar.getSelectedMinValue() * 1000);
-                                handler.postDelayed(r, 1000);
-                            }
-                        }, 1000);
-
                     }
                 });
+            }
+            else if (requestCode == REQUEST_TAKE_GALLERY_VIDEO) {
+                selectedVideoUri = data.getData();
+                videoView.setVideoURI(selectedVideoUri);
+                videoView.start();
+                videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
 
-//                }
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        controller = new MediaController(VideoConcatActivity.this);
+                        controller.setAnchorView(videoView);
+                        videoView.setMediaController(controller);
+                        mp.setLooping(true);
+                    }
+                });
             }
         }
-    }
-
-    private String getTime(int seconds) {
-        int hr = seconds / 3600;
-        int rem = seconds % 3600;
-        int mn = rem / 60;
-        int sec = rem % 60;
-        return String.format("%02d", hr) + ":" + String.format("%02d", mn) + ":" + String.format("%02d", sec);
     }
 
     /**
@@ -291,7 +296,7 @@ public class VideoReverseActivity extends AppCompatActivity {
     }
 
     private void showUnsupportedExceptionDialog() {
-        new AlertDialog.Builder(VideoReverseActivity.this)
+        new AlertDialog.Builder(VideoConcatActivity.this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setTitle("Not Supported")
                 .setMessage("Device Not Supported")
@@ -299,7 +304,7 @@ public class VideoReverseActivity extends AppCompatActivity {
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        VideoReverseActivity.this.finish();
+                        VideoConcatActivity.this.finish();
                     }
                 })
                 .create()
@@ -308,98 +313,32 @@ public class VideoReverseActivity extends AppCompatActivity {
     }
 
     /**
-     * Command for segmenting video
+     * Command for extracting audio from video
      */
-    private void splitVideoCommand(String path) {
+    private void joinVideos() {
         File moviesDir = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_MOVIES
         );
-        String filePrefix = "split_video";
+
+        String filePrefix = "concat";
         String fileExtn = ".mp4";
-
-        File dir = new File(moviesDir, ".VideoSplit");
-        if (dir.exists())
-            deleteDir(dir);
-        dir.mkdir();
-        File dest = new File(dir, filePrefix + "%03d" + fileExtn);
-
-        String[] complexCommand = {"-i", path, "-c:v", "libx264", "-crf", "22", "-map", "0", "-segment_time", "6", "-g", "9", "-sc_threshold", "0", "-force_key_frames", "expr:gte(t,n_forced*6)", "-f", "segment", dest.getAbsolutePath()};
-        execFFmpegBinary(complexCommand);
-    }
-
-    /**
-     * Command for reversing segmented videos
-     */
-    private void reverseVideoCommand() {
-        File moviesDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_MOVIES
-        );
-        File srcDir = new File(moviesDir, ".VideoSplit");
-        File[] files = srcDir.listFiles();
-        String filePrefix = "reverse_video";
-        String fileExtn = ".mp4";
-        File destDir = new File(moviesDir, ".VideoPartsReverse");
-        if (destDir.exists())
-            deleteDir(destDir);
-        destDir.mkdir();
-        for (int i = 0; i < files.length; i++) {
-            File dest = new File(destDir, filePrefix + i + fileExtn);
-            String command[] = {"-i",files[i].getAbsolutePath(), "-vf", "reverse", dest.getAbsolutePath()};
-            if (i == files.length - 1)
-                lastReverseCommand = command;
-            execFFmpegBinary(command);
-        }
-
-
-    }
-
-    /**
-     * Command for concating reversed segmented videos
-     */
-    private void concatVideoCommand() {
-        File moviesDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_MOVIES
-        );
-        File srcDir = new File(moviesDir, ".VideoPartsReverse");
-        File[] files = srcDir.listFiles();
-        if (files != null && files.length > 1) {
-            Arrays.sort(files, LastModifiedFileComparator.LASTMODIFIED_REVERSE);
-        }
-        StringBuilder stringBuilder = new StringBuilder();
-        StringBuilder filterComplex = new StringBuilder();
-        filterComplex.append("-filter_complex,");
-
-        if (files != null) {
-            for (int i = 0; i < files.length; i++) {
-                stringBuilder.append("-i" + ",").append(files[i].getAbsolutePath()).append(",");
-                filterComplex.append("[").append(i).append(":v").append(i).append("] [").append(i).append(":a").append(i).append("] ");
-            }
-        }
-        if (files != null) {
-            filterComplex.append("concat=n=").append(files.length).append(":v=1:a=1 [v] [a]");
-        }
-        String[] inputCommand = stringBuilder.toString().split(",");
-        String[] filterCommand = filterComplex.toString().split(",");
-
-        String filePrefix = "reverse_video";
-        String fileExtn = ".mp4";
+        String video1RealPath = getPath(VideoConcatActivity.this, selectedVideo1Uri);
+        String videoRealPath = getPath(VideoConcatActivity.this, selectedVideoUri);
         File dest = new File(moviesDir, filePrefix + fileExtn);
+
         int fileNo = 0;
         while (dest.exists()) {
             fileNo++;
             dest = new File(moviesDir, filePrefix + fileNo + fileExtn);
         }
+        Log.d(TAG, "src: video1:" + video1RealPath + "& video:" + videoRealPath);
+        Log.d(TAG, "dest: " + dest.getAbsolutePath());
         filePath = dest.getAbsolutePath();
-        String[] destinationCommand = {"-map", "[v]", "-map", "[a]", dest.getAbsolutePath()};
-        execFFmpegBinary(combine(inputCommand, filterCommand, destinationCommand));
-    }
+        final String[] complexCommand = {"-y", "-i", videoRealPath, "-i", video1RealPath, "-strict", "experimental", "-filter_complex",
+                "[0:v]scale=480x640,setsar=1:1[v0];[1:v]scale=480x640,setsar=1:1[v1];[v0][0:a][v1][1:a] concat=n=2:v=1:a=1",
+                "-ab", "48000", "-ac", "2", "-ar", "22050", "-s", "480x640", "-vcodec", "libx264","-crf","27","-q","4","-preset", "ultrafast", filePath};
+        execFFmpegBinary(complexCommand);
 
-    public static String[] combine(String[] arg1, String[] arg2, String[] arg3) {
-        String[] result = new String[arg1.length + arg2.length + arg3.length];
-        System.arraycopy(arg1, 0, result, 0, arg1.length);
-        System.arraycopy(arg2, 0, result, arg1.length, arg2.length);
-        System.arraycopy(arg3, 0, result, arg1.length + arg2.length, arg3.length);
-        return result;
     }
 
     /**
@@ -416,49 +355,15 @@ public class VideoReverseActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String s) {
                     Log.d(TAG, "SUCCESS with output : " + s);
-                    if (choice == 1 || choice == 2 || choice == 5 || choice == 6 || choice == 7) {
-                        Intent intent = new Intent(VideoReverseActivity.this, VideoPreviewActivity.class);
-                        intent.putExtra(FILEPATH, filePath);
-                        startActivity(intent);
-                    }
-                    else if (choice == 4) {
-                        Intent intent = new Intent(VideoReverseActivity.this, AudioPreviewActivity.class);
-                        intent.putExtra(FILEPATH, filePath);
-                        startActivity(intent);
-                    } else if (choice == 8) {
-                        choice = 9;
-                        reverseVideoCommand();
-                    } else if (Arrays.equals(command, lastReverseCommand)) {
-                        choice = 10;
-                        concatVideoCommand();
-                    } else if (choice == 10) {
-                        File moviesDir = Environment.getExternalStoragePublicDirectory(
-                                Environment.DIRECTORY_MOVIES
-                        );
-                        File destDir = new File(moviesDir, ".VideoPartsReverse");
-                        File dir = new File(moviesDir, ".VideoSplit");
-                        if (dir.exists())
-                            deleteDir(dir);
-                        if (destDir.exists())
-                            deleteDir(destDir);
-                        choice = 11;
-                        Intent intent = new Intent(VideoReverseActivity.this, VideoPreviewActivity.class);
-                        intent.putExtra(FILEPATH, filePath);
-                        startActivity(intent);
-                    }
+                    Intent intent = new Intent(VideoConcatActivity.this, VideoPreviewActivity.class);
+                    intent.putExtra(FILEPATH, filePath);
+                    startActivity(intent);
                 }
 
                 @Override
                 public void onProgress(String s) {
                     Log.d(TAG, "Started command : ffmpeg " + Arrays.toString(command));
-                    if (choice == 8)
-                        progressDialog.setMessage("progress : splitting video " + s);
-                    else if (choice == 9)
-                        progressDialog.setMessage("progress : reversing splitted videos " + s);
-                    else if (choice == 10)
-                        progressDialog.setMessage("progress : concatenating reversed videos " + s);
-                    else
-                        progressDialog.setMessage("progress : " + s);
+                    progressDialog.setMessage("progress : " + s);
                     Log.d(TAG, "progress : " + s);
                 }
 
@@ -472,31 +377,13 @@ public class VideoReverseActivity extends AppCompatActivity {
                 @Override
                 public void onFinish() {
                     Log.d(TAG, "Finished command : ffmpeg " + Arrays.toString(command));
-                    if (choice != 8 && choice != 9 && choice != 10) {
-                        progressDialog.dismiss();
-                    }
+                    progressDialog.dismiss();
 
                 }
             });
         } catch (FFmpegCommandAlreadyRunningException e) {
             // do nothing for now
         }
-    }
-
-
-    public static boolean deleteDir(File dir) {
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            if (children != null) {
-                for (String aChildren : children) {
-                    boolean success = deleteDir(new File(dir, aChildren));
-                    if (!success) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return dir.delete();
     }
 
     /**
@@ -506,7 +393,6 @@ public class VideoReverseActivity extends AppCompatActivity {
      */
     private String getPath(final Context context, final Uri uri) {
 
-        // DocumentProvider
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             if (DocumentsContract.isDocumentUri(context, uri)) {
                 // ExternalStorageProvider
@@ -518,8 +404,6 @@ public class VideoReverseActivity extends AppCompatActivity {
                     if ("primary".equalsIgnoreCase(type)) {
                         return Environment.getExternalStorageDirectory() + "/" + split[1];
                     }
-
-                    // TODO handle non-primary volumes
                 }
                 // DownloadsProvider
                 else if (isDownloadsDocument(uri)) {
@@ -615,17 +499,6 @@ public class VideoReverseActivity extends AppCompatActivity {
      */
     private boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
-    }
-
-    private Dialog showSingleOptionTextDialog(Context mContext) {
-        Dialog textDialog = new Dialog(mContext, R.style.DialogAnimation);
-        if(textDialog.getWindow()!=null){
-        textDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        textDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        }
-        textDialog.setContentView(R.layout.dialog_singleoption_text);
-        textDialog.setCancelable(false);
-        return textDialog;
     }
 
 }
