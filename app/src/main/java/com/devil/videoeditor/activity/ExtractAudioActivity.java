@@ -34,6 +34,10 @@ import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+
 import org.florescu.android.rangeseekbar.RangeSeekBar;
 
 
@@ -53,7 +57,6 @@ public class ExtractAudioActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     private Uri selectedVideoUri;
     private static final String TAG = "DEVIL";
-    private static final String POSITION = "position";
     private static final String FILEPATH = "filepath";
     private int stopPosition;
     private ScrollView mainlayout;
@@ -66,6 +69,11 @@ public class ExtractAudioActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_extract_audio);
+        AdView mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                .build();
+        mAdView.loadAd(adRequest);
         TextView uploadVideo = findViewById(R.id.uploadVideo);
         tvLeft = findViewById(R.id.tvLeft);
         tvRight = findViewById(R.id.tvRight);

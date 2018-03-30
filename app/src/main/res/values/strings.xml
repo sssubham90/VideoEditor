@@ -13,5 +13,7 @@
     <string name="dialogMessage">The process will take some time.Please be patient.</string>
     <string name="uploadAudio">Upload Audio</string>
     <string name="merge">Merge</string>
+    <string name="banner">ca-app-pub-3940256099942544/1033173712</string>
+    <string name="reward">ca-app-pub-3940256099942544/1033173712</string>
 
 </resources>
