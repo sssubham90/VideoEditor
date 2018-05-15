@@ -1,11 +1,14 @@
 package com.devil.videoeditor.activity;
 
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.VideoView;
@@ -15,11 +18,14 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
 
+import java.io.File;
+
 public class VideoPreviewActivity extends AppCompatActivity {
     private VideoView videoView;
     private SeekBar seekBar;
     private int stopPosition;
     private static final String FILEPATH = "filepath";
+    private String filePath;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -36,9 +42,15 @@ public class VideoPreviewActivity extends AppCompatActivity {
         }
         videoView = findViewById(R.id.videoView);
         seekBar = findViewById(R.id.seekBar);
+        findViewById(R.id.open).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openFolder();
+            }
+        });
 
         TextView tvInstruction = findViewById(R.id.tvInstruction);
-        String filePath = getIntent().getStringExtra(FILEPATH);
+        filePath = getIntent().getStringExtra(FILEPATH);
 
 
         tvInstruction.setText(String.format("Video stored at path %s", filePath));
@@ -91,6 +103,13 @@ public class VideoPreviewActivity extends AppCompatActivity {
         super.onResume();
         videoView.seekTo(stopPosition);
         videoView.start();
+    }
+
+    public void openFolder(){
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        Uri uri = Uri.parse(filePath);
+        intent.setDataAndType(uri, "video/*");
+        startActivity(Intent.createChooser(intent, "Video folder"));
     }
 
     private Runnable onEverySecond = new Runnable() {
