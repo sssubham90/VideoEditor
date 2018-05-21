@@ -11,8 +11,8 @@ android {
         applicationId "com.devil.videoeditor"
         minSdkVersion 16
         targetSdkVersion 27
-        versionCode 5
-        versionName '2.1.5'
+        versionCode 1
+        versionName '1.0.0'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
