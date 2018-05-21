@@ -16,5 +16,6 @@
     <string name="banner">ca-app-pub-3940256099942544/1033173712</string>
     <string name="reward">ca-app-pub-3940256099942544/1033173712</string>
     <string name="join">Join</string>
+    <string name="zeroHour">00:00:00</string>
 
 </resources>
