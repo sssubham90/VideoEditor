@@ -106,10 +106,14 @@ public class VideoPreviewActivity extends AppCompatActivity {
     }
 
     public void openFolder(){
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        Uri uri = Uri.parse(filePath);
-        intent.setDataAndType(uri, "video/*");
-        startActivity(Intent.createChooser(intent, "Video folder"));
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        String folderPath = (new File(filePath).getParentFile()).getAbsolutePath();
+        Uri uri = Uri.parse(folderPath);
+        intent.setDataAndType(uri, "resource/folder");
+        if (intent.resolveActivityInfo(getPackageManager(), 0) != null)
+        {
+            startActivity(intent);
+        }
     }
 
     private Runnable onEverySecond = new Runnable() {
